@@ -1,0 +1,45 @@
+# Environment — ALL .env variants except the template
+.env*
+!.env.example
+
+# Database files
+*.duckdb
+*.duckdb.wal
+data/
+
+# Secrets / credentials (catch-all for future additions)
+secrets/
+*.pem
+*.key
+*.crt
+*.p12
+*.token
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Conda / venvs
+.venv/
+env/
+
+# Jupyter
+notebooks/.ipynb_checkpoints/
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs/

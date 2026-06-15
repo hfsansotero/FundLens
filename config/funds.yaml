@@ -1,0 +1,36 @@
+funds:
+  - ticker: VFINX
+    name: "Vanguard 500 Index"
+    category: "Large Blend"
+    manager: "Vanguard"
+    currency: USD
+
+  - ticker: FCNTX
+    name: "Fidelity Contrafund"
+    category: "Large Growth"
+    manager: "Fidelity"
+    currency: USD
+
+  - ticker: VBMFX
+    name: "Vanguard Total Bond Market"
+    category: "Bonds"
+    manager: "Vanguard"
+    currency: USD
+
+  - ticker: VGTSX
+    name: "Vanguard Total International Stock"
+    category: "International"
+    manager: "Vanguard"
+    currency: USD
+
+  - ticker: PRHSX
+    name: "T. Rowe Price Health Sciences"
+    category: "Sector Health"
+    manager: "T. Rowe Price"
+    currency: USD
+
+  - ticker: FAGIX
+    name: "Fidelity Capital & Income"
+    category: "High Yield Bonds"
+    manager: "Fidelity"
+    currency: USD
