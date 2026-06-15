@@ -29,7 +29,7 @@ def get_all_active_funds(session: Session) -> list[Fund]:
 def upsert_prices(session: Session, fund_id: int, df: pd.DataFrame) -> int:
     """Insert price rows, skip existing (fund_id, date) pairs. Returns inserted count."""
     existing = {
-        row.date
+        row
         for row in session.scalars(
             select(Price.date).where(Price.fund_id == fund_id)
         )

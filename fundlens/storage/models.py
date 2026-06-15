@@ -2,17 +2,26 @@ from datetime import date, datetime
 from typing import Optional
 from sqlalchemy import (
     Boolean, Date, DateTime, ForeignKey, Integer,
-    Numeric, String, Text, UniqueConstraint, func,
+    Numeric, Sequence, String, Text, UniqueConstraint, func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fundlens.storage.database import Base
 
+# Explicit sequences — work in both DuckDB (via nextval) and PostgreSQL.
+# Avoids SERIAL (PostgreSQL-only) and IDENTITY (not implemented in duckdb-engine).
+_fund_seq = Sequence("fund_id_seq", start=1)
+_price_seq = Sequence("price_id_seq", start=1)
+_metric_seq = Sequence("metric_id_seq", start=1)
+_prediction_seq = Sequence("prediction_id_seq", start=1)
+_model_score_seq = Sequence("model_score_id_seq", start=1)
+_ingestion_log_seq = Sequence("ingestion_log_id_seq", start=1)
+
 
 class Fund(Base):
     __tablename__ = "funds"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, _fund_seq, primary_key=True)
     ticker: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
     name: Mapped[Optional[str]] = mapped_column(String(200))
     category: Mapped[Optional[str]] = mapped_column(String(100))
@@ -31,7 +40,7 @@ class Price(Base):
     __tablename__ = "prices"
     __table_args__ = (UniqueConstraint("fund_id", "date"),)
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, _price_seq, primary_key=True)
     fund_id: Mapped[int] = mapped_column(ForeignKey("funds.id"), nullable=False)
     date: Mapped[date] = mapped_column(Date, nullable=False)
     nav: Mapped[float] = mapped_column(Numeric(12, 4), nullable=False)
@@ -46,7 +55,7 @@ class Metric(Base):
     __tablename__ = "metrics"
     __table_args__ = (UniqueConstraint("fund_id", "date"),)
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, _metric_seq, primary_key=True)
     fund_id: Mapped[int] = mapped_column(ForeignKey("funds.id"), nullable=False)
     date: Mapped[date] = mapped_column(Date, nullable=False)
     rolling_vol_30: Mapped[Optional[float]] = mapped_column(Numeric(10, 6))
@@ -60,7 +69,7 @@ class Metric(Base):
 class Prediction(Base):
     __tablename__ = "predictions"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, _prediction_seq, primary_key=True)
     fund_id: Mapped[int] = mapped_column(ForeignKey("funds.id"), nullable=False)
     model_name: Mapped[str] = mapped_column(String(50), nullable=False)
     predicted_for: Mapped[date] = mapped_column(Date, nullable=False)
@@ -76,7 +85,7 @@ class Prediction(Base):
 class ModelScore(Base):
     __tablename__ = "model_scores"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, _model_score_seq, primary_key=True)
     fund_id: Mapped[int] = mapped_column(ForeignKey("funds.id"), nullable=False)
     model_name: Mapped[str] = mapped_column(String(50), nullable=False)
     eval_date: Mapped[date] = mapped_column(Date, nullable=False)
@@ -89,7 +98,7 @@ class ModelScore(Base):
 class IngestionLog(Base):
     __tablename__ = "ingestion_log"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, _ingestion_log_seq, primary_key=True)
     fund_id: Mapped[Optional[int]] = mapped_column(ForeignKey("funds.id"))
     date: Mapped[date] = mapped_column(Date, nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False)  # success | failed | missing_from_source
