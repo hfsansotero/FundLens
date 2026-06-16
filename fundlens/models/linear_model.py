@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import Ridge
 
 from fundlens.models.base_model import BaseModel
 from fundlens.models.comparison import future_dates, walk_forward
@@ -20,6 +19,7 @@ class LinearModel(BaseModel):
     name = "linear"
 
     def fit(self, prices: pd.Series) -> None:
+        from sklearn.linear_model import Ridge  # lazy: not in [dev]
         X, y = _lag_features(prices.values)
         self._model = Ridge(alpha=1.0).fit(X, y)
         self._buf = list(prices.values[-_WINDOW:])

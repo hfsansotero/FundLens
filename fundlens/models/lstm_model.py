@@ -2,24 +2,11 @@
 
 import numpy as np
 import pandas as pd
-import torch
-import torch.nn as nn
 
 from fundlens.models.base_model import BaseModel
 from fundlens.models.comparison import future_dates, walk_forward
 
 _WINDOW = 60
-
-
-class _Net(nn.Module):
-    def __init__(self, hidden: int = 64, n_layers: int = 2):
-        super().__init__()
-        self.lstm = nn.LSTM(1, hidden, n_layers, batch_first=True, dropout=0.2)
-        self.fc = nn.Linear(hidden, 1)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        out, _ = self.lstm(x)
-        return self.fc(out[:, -1, :])
 
 
 class LSTMModel(BaseModel):
@@ -31,6 +18,19 @@ class LSTMModel(BaseModel):
         self._lr = lr
 
     def fit(self, prices: pd.Series) -> None:
+        import torch
+        import torch.nn as nn  # lazy: not in [dev]
+
+        class _Net(nn.Module):
+            def __init__(self, hidden: int, n_layers: int = 2):
+                super().__init__()
+                self.lstm = nn.LSTM(1, hidden, n_layers, batch_first=True, dropout=0.2)
+                self.fc = nn.Linear(hidden, 1)
+
+            def forward(self, x):
+                out, _ = self.lstm(x)
+                return self.fc(out[:, -1, :])
+
         vals = prices.values.astype(float)
         self._mu, self._sigma = vals.mean(), vals.std() + 1e-8
         norm = (vals - self._mu) / self._sigma
@@ -56,6 +56,8 @@ class LSTMModel(BaseModel):
         self._prices = prices
 
     def predict(self, horizon: int) -> pd.DataFrame:
+        import torch
+
         self._net.eval()
         buf = self._buf.copy()
         preds_norm = []
