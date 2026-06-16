@@ -35,6 +35,10 @@ ml = [
     "statsmodels>=0.14",
     "prophet>=1.1",
     "scikit-learn>=1.4",
+    "arch>=6.0",
+    "xgboost>=2.0",
+    "lightgbm>=4.0",
+    "torch>=2.3",
 ]
 # PostgreSQL — swap in when deploying to Neon / any cloud PG
 postgres = [

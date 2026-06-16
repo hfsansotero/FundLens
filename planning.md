@@ -44,9 +44,12 @@ ORM / Acceso       SQLAlchemy 2.x             Abstracción que hace la
                                               migración DuckDB→Postgres
                                               con cambiar una línea
 Procesamiento      pandas + numpy             Estándar
-Modelos            statsmodels (ARIMA/GARCH)  Clásicos robustos
+Modelos            statsmodels (ARIMA/ETS/GARCH) Clásicos robustos
                    prophet                    Facebook/Meta Prophet
-                   scikit-learn               Features auxiliares
+                   scikit-learn               Linear/Ridge regression
+                   xgboost + lightgbm         Gradient boosting (lag features)
+                   torch (PyTorch)            LSTM 2 capas (CPU)
+                   arch                       GARCH volatilidad
 Dashboard          Streamlit                  Rápido, pythónico, suficiente
 Hosting dashboard  Render.com (free tier)     Deploy Streamlit como web service
 Cloud DB           Neon PostgreSQL (free)     0.5 GB, no pausa, compatible SQLAlchemy
@@ -137,11 +140,14 @@ fundlens/
 │   ├── models/                   # Modelos predictivos
 │   │   ├── __init__.py
 │   │   ├── base_model.py         # Clase abstracta: fit(), predict(), score()
-│   │   ├── arima_model.py        # ARIMA + auto_arima
-│   │   ├── garch_model.py        # GARCH para volatilidad
-
-│   │   ├── prophet_model.py      # Prophet wrapper
-│   │   └── comparison.py         # Motor de comparación entre modelos
+│   │   ├── arima_model.py        # ARIMA(1,1,1) — statsmodels
+│   │   ├── prophet_model.py      # Prophet — Meta
+│   │   ├── ets_model.py          # Holt-Winters amortiguado — statsmodels
+│   │   ├── linear_model.py       # Ridge regression sobre lags — sklearn
+│   │   ├── tree_models.py        # XGBoost + LightGBM con lags recursivos
+│   │   ├── lstm_model.py         # LSTM 2 capas — PyTorch
+│   │   ├── garch_model.py        # GARCH(1,1) vol forecaster (no precio)
+│   │   └── comparison.py         # Motor walk-forward + compare_models()
 │   │
 │   ├── pipeline/                 # Orquestación
 │   │   ├── __init__.py
@@ -278,13 +284,13 @@ TABLE ingestion_log (
 - [x] Implementar `yfinance_source.py` con manejo de errores y reintentos
 - [x] Crear modelos ORM y `database.py` con DuckDB + SQLAlchemy
 - [x] Script `initial_load.py` para cargar histórico (mínimo 5 años)
-- [x] Tests básicos de ingesta y almacenamiento (stubs en `tests/`)
-- [ ] **SIGUIENTE:** Crear conda env → `conda env create -f environment.yml`
-- [ ] **SIGUIENTE:** `cp .env.example .env` y ajustar si hace falta
-- [ ] **SIGUIENTE:** Ejecutar `python scripts/initial_load.py --all-funds --years 5`
-- [ ] Verificar que los datos son correctos comparando con fuente manual
+- [x] Tests básicos de ingesta y almacenamiento
+- [x] Crear conda env → `conda env create -f environment.yml`
+- [x] `cp .env.example .env`
+- [x] Ejecutar `python scripts/initial_load.py --all-funds --years 5`
+- [x] CI/CD con GitHub Actions (push a `dev` + PR a `main`)
 
-**Entregable:** `python scripts/initial_load.py` funciona y tienes 5+ años de NAVs en DuckDB.
+**Entregable:** ✅ `python scripts/initial_load.py` funciona y hay 5+ años de NAVs en DuckDB.
 
 ---
 
@@ -294,13 +300,13 @@ TABLE ingestion_log (
 
 - [ ] `daily_update.py`: job que cada día laboral a las 18:00 descarga el NAV del día
 - [ ] `scheduler.py`: APScheduler corriendo en background
-- [ ] `returns.py`: cálculo de log-returns y retornos acumulados
-- [ ] `volatility.py`: volatilidad rolling (30d, 90d)
-- [ ] `correlations.py`: matriz de correlaciones estática y rolling
-- [ ] `drawdown.py`: cálculo de drawdown y períodos de recuperación
-- [ ] Dashboard Streamlit básico (página overview + detalle de fondo)
+- [x] `returns.py`: cálculo de log-returns y retornos acumulados
+- [x] `volatility.py`: volatilidad rolling (30d, 90d), Sharpe
+- [x] `correlations.py`: matriz de correlaciones estática y rolling
+- [x] `drawdown.py`: cálculo de drawdown (recovery_periods pendiente)
+- [x] Dashboard Streamlit — 5 páginas en vivo: overview, fund detail, correlations, predictions, drawdown
 
-**Entregable:** Dashboard corriendo en `localhost:8501` con datos reales actualizados diariamente.
+**Entregable:** ✅ Dashboard en `localhost:8501` con datos reales. Pendiente: scheduler diario.
 
 #### Deploy al final de Fase 1 (opcional pero recomendado)
 
@@ -322,16 +328,21 @@ streamlit run fundlens/dashboard/app.py --server.port $PORT --server.address 0.0
 
 *Objetivo: el núcleo de ML del proyecto*
 
-- [ ] `base_model.py`: interfaz abstracta `fit()`, `predict()`, `score()`
-- [ ] `arima_model.py`: con `auto_arima` para selección automática de p,d,q
-- [ ] `garch_model.py`: modelado de volatilidad
-- [ ] `prophet_model.py`: wrapper con configuración de estacionalidad
-- [ ] `comparison.py`: backtesting walk-forward, cálculo de MAE/RMSE/MAPE por horizonte
-- [ ] Almacenamiento de predicciones y scores en DB
-- [ ] Página `04_predictions.py` en el dashboard: comparativa visual de modelos
-- [ ] Notebooks de exploración para documentar decisiones de modelado
+- [x] `base_model.py`: interfaz abstracta `fit()`, `predict()`, `score()`
+- [x] `arima_model.py`: ARIMA(1,1,1) con statsmodels
+- [x] `garch_model.py`: GARCH(1,1) — forecaster de volatilidad (no de precio)
+- [x] `prophet_model.py`: wrapper Prophet con estacionalidad semanal/anual
+- [x] `ets_model.py`: Holt-Winters amortiguado (statsmodels, sin deps extra)
+- [x] `linear_model.py`: Ridge regression sobre lag features (sklearn)
+- [x] `tree_models.py`: XGBoost + LightGBM con lag features recursivos
+- [x] `lstm_model.py`: LSTM 2 capas con PyTorch (ventana=60, normalización z-score)
+- [x] `comparison.py`: motor walk-forward, cálculo de MAE/RMSE/MAPE por horizonte
+- [x] Página `04_predictions.py`: forecast chart, GARCH vol, comparativa walk-forward
+- [ ] Almacenamiento de scores walk-forward en `model_scores` (DB)
+- [ ] Almacenamiento de predicciones en `predictions` (DB)
+- [ ] Notebooks de exploración
 
-**Entregable:** Para cada fondo, el dashboard muestra predicción a 5/10/20 días de cada modelo con su histórico de aciertos.
+**Entregable:** 🔄 Dashboard muestra predicciones y comparativa de 7 modelos. Pendiente: persistencia en DB.**
 
 ---
 
