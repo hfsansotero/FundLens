@@ -3,7 +3,6 @@
 import warnings
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.arima.model import ARIMA
 
 from fundlens.models.base_model import BaseModel
 from fundlens.models.comparison import future_dates, walk_forward
@@ -13,6 +12,7 @@ class ArimaModel(BaseModel):
     name = "arima"
 
     def fit(self, prices: pd.Series) -> None:
+        from statsmodels.tsa.arima.model import ARIMA  # lazy: not in [dev]
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             self._result = ARIMA(prices.values, order=(1, 1, 1)).fit()

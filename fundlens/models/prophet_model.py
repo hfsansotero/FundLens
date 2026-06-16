@@ -2,19 +2,18 @@
 
 import logging
 import pandas as pd
-from prophet import Prophet
 
 from fundlens.models.base_model import BaseModel
 from fundlens.models.comparison import walk_forward
-
-logging.getLogger("prophet").setLevel(logging.WARNING)
-logging.getLogger("cmdstanpy").setLevel(logging.WARNING)
 
 
 class ProphetModel(BaseModel):
     name = "prophet"
 
     def fit(self, prices: pd.Series) -> None:
+        from prophet import Prophet  # lazy: not in [dev]
+        logging.getLogger("prophet").setLevel(logging.WARNING)
+        logging.getLogger("cmdstanpy").setLevel(logging.WARNING)
         if isinstance(prices.index, pd.DatetimeIndex):
             ds = prices.index
         else:

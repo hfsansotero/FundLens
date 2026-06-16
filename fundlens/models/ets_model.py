@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
 from fundlens.models.base_model import BaseModel
 from fundlens.models.comparison import future_dates, walk_forward
@@ -12,6 +11,7 @@ class ETSModel(BaseModel):
     name = "ets"
 
     def fit(self, prices: pd.Series) -> None:
+        from statsmodels.tsa.holtwinters import ExponentialSmoothing  # lazy: not in [dev]
         self._model = ExponentialSmoothing(
             prices.values, trend="add", seasonal=None, damped_trend=True
         ).fit(optimized=True)

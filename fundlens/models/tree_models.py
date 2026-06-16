@@ -2,8 +2,6 @@
 
 import numpy as np
 import pandas as pd
-import xgboost as xgb
-import lightgbm as lgb
 
 from fundlens.models.base_model import BaseModel
 from fundlens.models.comparison import future_dates, walk_forward
@@ -36,6 +34,7 @@ class XGBoostModel(BaseModel):
     name = "xgboost"
 
     def fit(self, prices: pd.Series) -> None:
+        import xgboost as xgb  # lazy: not in [dev]
         X, y = _lag_features(prices.values)
         self._model = xgb.XGBRegressor(n_estimators=100, learning_rate=0.1,
                                         max_depth=4, verbosity=0)
@@ -54,6 +53,7 @@ class LGBMModel(BaseModel):
     name = "lightgbm"
 
     def fit(self, prices: pd.Series) -> None:
+        import lightgbm as lgb  # lazy: not in [dev]
         X, y = _lag_features(prices.values)
         self._model = lgb.LGBMRegressor(n_estimators=100, learning_rate=0.1,
                                           num_leaves=31, verbose=-1)

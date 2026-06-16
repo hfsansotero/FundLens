@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas as pd
-from arch import arch_model
 
 
 class GarchModel:
@@ -15,6 +14,7 @@ class GarchModel:
     name = "garch"
 
     def fit(self, prices: pd.Series) -> None:
+        from arch import arch_model  # lazy: not in [dev]
         log_ret = np.log(prices / prices.shift(1)).dropna() * 100  # in pct
         self._result = arch_model(log_ret, vol="Garch", p=1, q=1,
                                    rescale=False).fit(disp="off")
