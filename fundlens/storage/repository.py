@@ -39,7 +39,7 @@ def upsert_prices(session: Session, fund_id: int, df: pd.DataFrame) -> int:
             fund_id=fund_id,
             date=row["date"],
             nav=row["nav"],
-            log_return=row.get("log_return"),
+            log_return=None if pd.isna(row.get("log_return")) else row.get("log_return"),
             source=row.get("source"),
         )
         for _, row in df.iterrows()
