@@ -23,12 +23,12 @@ class ArimaModel(BaseModel):
             warnings.simplefilter("ignore")
             fc = self._result.get_forecast(steps=horizon)
         pred = fc.predicted_mean
-        ci = fc.conf_int()
+        ci = np.asarray(fc.conf_int())
         return pd.DataFrame({
             "date": future_dates(self._prices, horizon),
             "predicted_value": pred,
-            "lower_bound": ci.iloc[:, 0].values,
-            "upper_bound": ci.iloc[:, 1].values,
+            "lower_bound": ci[:, 0],
+            "upper_bound": ci[:, 1],
         })
 
     def score(self, prices: pd.Series, horizon: int, n_splits: int = 20) -> dict[str, float]:

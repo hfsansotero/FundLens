@@ -7,7 +7,6 @@ import streamlit as st
 
 from fundlens.dashboard._data import filter_period, load_funds, load_prices
 
-st.set_page_config(page_title="Correlations · FundLens", layout="wide")
 st.title("Dynamic Correlations")
 
 funds = load_funds()
@@ -29,7 +28,8 @@ if returns.empty:
 
 corr = returns.corr()
 st.plotly_chart(
-    px.imshow(corr, text_auto=".2f", color_continuous_scale="RdBu_r",
+    px.imshow(corr, text_auto=".2f",
+              color_continuous_scale=["red", "white", "green"],
               zmin=-1, zmax=1, title="Return Correlation Matrix"),
     use_container_width=True,
 )

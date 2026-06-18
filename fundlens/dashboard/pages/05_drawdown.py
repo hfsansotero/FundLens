@@ -6,7 +6,6 @@ import streamlit as st
 
 from fundlens.dashboard._data import filter_period, load_funds, load_prices
 
-st.set_page_config(page_title="Drawdown · FundLens", layout="wide")
 st.title("Drawdown Analysis")
 
 funds = load_funds()

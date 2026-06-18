@@ -9,7 +9,6 @@ from fundlens.dashboard._data import (
     drawdown_series, filter_period, load_funds, load_prices, vol_30d, ytd_return,
 )
 
-st.set_page_config(page_title="Fund Detail · FundLens", layout="wide")
 st.title("Fund Detail")
 
 funds = load_funds()

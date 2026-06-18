@@ -8,7 +8,6 @@ import streamlit as st
 
 from fundlens.dashboard._data import filter_period, load_funds, load_prices
 
-st.set_page_config(page_title="Predictions · FundLens", layout="wide")
 st.title("Model Predictions")
 
 funds = load_funds()
