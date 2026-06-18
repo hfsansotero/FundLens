@@ -186,9 +186,10 @@ pytest --cov=fundlens --cov-report=html
 | Phase | Goal | Status |
 |---|---|---|
 | 0 — Foundations | Project structure, ingestion, DB, initial load | ✅ Complete |
-| 1 — Pipeline + Analysis | Returns/vol/drawdown processing, full dashboard (5 pages) | ✅ Complete (scheduler pending) |
+| 1 — Pipeline + Analysis | Returns/vol/drawdown processing, full dashboard (6 pages incl. About) | ✅ Complete (scheduler pending) |
 | 2 — Predictive Models | ARIMA, Prophet, ETS, Linear, XGBoost, LightGBM, LSTM, GARCH vol, walk-forward | 🔄 In progress (models done, DB persistence pending) |
 | 3 — Expansion | Macro variables (VIX/FRED), regime detection (HMM), alerts | Pending |
+| 4 — User Accounts | Login, per-user fund watchlist (capped), configurable model parameters (ARIMA order, Prophet/XGBoost/LightGBM/LSTM hyperparameters) | Pending — requires hosting (Phase 1 deploy) first |
 
 ---
 

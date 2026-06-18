@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 
 from fundlens.dashboard._data import (
-    arrow, day_change, filter_range, fund_label, load_funds, load_prices,
+    arrow, colorize, day_change, filter_range, fund_label, load_funds, load_prices,
     max_drawdown, period_picker, period_return, vol_30d,
 )
 
@@ -41,13 +41,8 @@ if not rows:
     st.info("No data in the selected period.")
     st.stop()
 
-st.dataframe(
-    pd.DataFrame(rows),
-    width="stretch",
-    hide_index=True,
-    column_config={
-        "Latest NAV": st.column_config.NumberColumn(format="$%.2f"),
-        "30d Vol (%)": st.column_config.NumberColumn(format="%.2f%%"),
-        "Max DD (%)": st.column_config.NumberColumn(format="%.2f%%"),
-    },
+styled = colorize(
+    pd.DataFrame(rows), ["1D Δ", "Period Return"],
+    fmt={"Latest NAV": "${:.2f}", "30d Vol (%)": "{:.2f}%", "Max DD (%)": "{:.2f}%"},
 )
+st.dataframe(styled, width="stretch", hide_index=True)

@@ -21,6 +21,7 @@ dependencies = [
     # Dashboard
     "streamlit>=1.35",
     "plotly>=5.20",
+    "jinja2>=3.1",
     # Config / infra
     "pydantic-settings>=2.0",
     "python-dotenv>=1.0",

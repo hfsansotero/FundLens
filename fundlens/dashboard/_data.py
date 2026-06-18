@@ -101,7 +101,23 @@ def drawdown_series(nav: pd.Series) -> pd.Series:
 
 
 def arrow(pct: float) -> str:
-    """📈/📉 render green/red in every emoji font — colored up/down with no extra deps."""
+    """📈/📉 prefix — paired with colorize() below for actual green/red text."""
     if pd.isna(pct):
         return "—"
     return f"📈 {pct:+.2f}%" if pct >= 0 else f"📉 {pct:+.2f}%"
+
+
+def _arrow_color(v: str) -> str:
+    if isinstance(v, str) and v.startswith("📈"):
+        return "color: #1a7f37; font-weight: 600"
+    if isinstance(v, str) and v.startswith("📉"):
+        return "color: #cf222e; font-weight: 600"
+    return ""
+
+
+def colorize(df: pd.DataFrame, arrow_cols: list[str], fmt: dict | None = None):
+    """Styler with green/red text on arrow_cols (from arrow()) + optional number formats."""
+    styler = df.style
+    if fmt:
+        styler = styler.format(fmt)
+    return styler.map(_arrow_color, subset=arrow_cols)

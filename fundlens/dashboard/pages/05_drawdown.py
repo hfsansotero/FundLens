@@ -4,7 +4,9 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from fundlens.dashboard._data import arrow, filter_range, fund_label, load_funds, load_prices, period_picker
+from fundlens.dashboard._data import (
+    arrow, colorize, filter_range, fund_label, load_funds, load_prices, period_picker,
+)
 
 st.title("Drawdown Analysis")
 
@@ -50,9 +52,8 @@ fig.add_hline(y=0, line_color="black", line_width=1)
 st.plotly_chart(fig, width="stretch")
 
 st.subheader("Max Drawdown by Fund")
-st.dataframe(
-    pd.DataFrame(rows).sort_values("Max DD (%)"),
-    width="stretch",
-    hide_index=True,
-    column_config={"Max DD (%)": st.column_config.NumberColumn(format="%.2f%%")},
+styled = colorize(
+    pd.DataFrame(rows).sort_values("Max DD (%)"), ["Current DD"],
+    fmt={"Max DD (%)": "{:.2f}%"},
 )
+st.dataframe(styled, width="stretch", hide_index=True)
