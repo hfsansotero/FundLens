@@ -31,7 +31,7 @@ st.plotly_chart(
     px.imshow(corr, text_auto=".2f",
               color_continuous_scale=["red", "white", "green"],
               zmin=-1, zmax=1, title="Return Correlation Matrix"),
-    use_container_width=True,
+    width="stretch",
 )
 
 # Rolling 60d correlation for a selected pair
@@ -51,6 +51,6 @@ if t1 != t2:
         xaxis_title="",
     )
     fig.add_hline(y=0, line_dash="dash", line_color="gray")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 else:
     st.info("Select two different funds.")

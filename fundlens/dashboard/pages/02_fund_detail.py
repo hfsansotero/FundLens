@@ -38,7 +38,7 @@ m4.metric("Sharpe (90d)", f"{trailing_sharpe:.2f}" if not np.isnan(trailing_shar
 # NAV chart
 st.plotly_chart(
     px.line(df, x="date", y="nav", title=f"{selected} — NAV", labels={"nav": "NAV ($)", "date": ""}),
-    use_container_width=True,
+    width="stretch",
 )
 
 # Log-return histogram + rolling 30d vol
@@ -49,13 +49,13 @@ c1, c2 = st.columns(2)
 with c1:
     st.plotly_chart(
         px.histogram(lr, nbins=60, title="Log-Return Distribution", labels={"value": "Log Return", "count": "Days"}),
-        use_container_width=True,
+        width="stretch",
     )
 with c2:
     st.plotly_chart(
         px.line(df.dropna(subset=["vol_30"]), x="date", y="vol_30",
                 title="Rolling 30d Volatility (annualized %)", labels={"vol_30": "Vol (%)", "date": ""}),
-        use_container_width=True,
+        width="stretch",
     )
 
 # Drawdown
@@ -67,4 +67,4 @@ fig_dd = go.Figure(go.Scatter(
     name="Drawdown",
 ))
 fig_dd.update_layout(title="Drawdown (%)", yaxis_title="Drawdown (%)", xaxis_title="")
-st.plotly_chart(fig_dd, use_container_width=True)
+st.plotly_chart(fig_dd, width="stretch")

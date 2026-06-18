@@ -29,7 +29,7 @@ for f in funds:
 
 st.dataframe(
     pd.DataFrame(rows),
-    use_container_width=True,
+    width="stretch",
     hide_index=True,
     column_config={
         "Latest NAV": st.column_config.NumberColumn(format="$%.2f"),

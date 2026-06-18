@@ -75,12 +75,12 @@ if st.button(f"Run {model_name.upper()} forecast"):
         ))
     fig.update_layout(title=f"{selected} — {model_name.upper()} {horizon}d Forecast",
                       xaxis_title="", yaxis_title="NAV ($)")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     st.dataframe(
         fc.rename(columns={"predicted_value": "Forecast", "lower_bound": "Lower",
                             "upper_bound": "Upper"}),
-        use_container_width=True, hide_index=True,
+        width="stretch", hide_index=True,
     )
 
 # ── GARCH volatility forecast ──────────────────────────────────────────────────
@@ -103,7 +103,7 @@ if st.button("Run GARCH volatility forecast"):
         px.bar(vol_fc, x="date", y="forecasted_vol_pct",
                title=f"{selected} — GARCH {horizon}d Annualized Vol Forecast (%)",
                labels={"forecasted_vol_pct": "Vol (%)", "date": ""}),
-        use_container_width=True,
+        width="stretch",
     )
 
 # ── Walk-forward comparison ────────────────────────────────────────────────────
@@ -139,7 +139,7 @@ if st.button("Run comparison"):
     results = run_comparison(selected, period, cmp_horizon, fast_models)
     st.dataframe(
         results.sort_values("mae"),
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         column_config={
             "mae": st.column_config.NumberColumn("MAE", format="%.4f"),

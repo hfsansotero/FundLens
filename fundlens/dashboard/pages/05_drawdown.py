@@ -41,12 +41,12 @@ fig.update_layout(
     hovermode="x unified",
 )
 fig.add_hline(y=0, line_color="black", line_width=1)
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width="stretch")
 
 st.subheader("Max Drawdown by Fund")
 st.dataframe(
     pd.DataFrame(rows).sort_values("Max DD (%)"),
-    use_container_width=True,
+    width="stretch",
     hide_index=True,
     column_config={"Max DD (%)": st.column_config.NumberColumn(format="%.2f%%")},
 )
