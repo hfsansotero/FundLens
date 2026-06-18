@@ -6,7 +6,8 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from fundlens.dashboard._data import (
-    drawdown_series, filter_period, load_funds, load_prices, vol_30d, ytd_return,
+    drawdown_series, filter_range, fund_label, load_funds, load_prices,
+    period_picker, period_return,
 )
 
 st.title("Fund Detail")
@@ -16,28 +17,30 @@ if not funds:
     st.warning("No funds loaded.")
     st.stop()
 
-ticker_map = {f["ticker"]: f for f in funds}
-col_sel, col_per = st.columns([2, 3])
-selected = col_sel.selectbox("Fund", list(ticker_map.keys()))
-period = col_per.radio("Period", ["1Y", "3Y", "5Y", "All"], horizontal=True, index=2)
+label_map = {fund_label(f): f for f in funds}
+selected_label = st.selectbox("Fund (type to search by ticker, name, category or manager)",
+                               list(label_map.keys()))
+fund = label_map[selected_label]
+start, end = period_picker("fd", default="5Y")
 
-df = filter_period(load_prices(ticker_map[selected]["id"]), period)
+df = filter_range(load_prices(fund["id"]), start, end)
 if df.empty:
-    st.warning("No price data for this fund.")
+    st.info("No data in the selected period.")
     st.stop()
 
 lr = df["log_return"].dropna()
-trailing_sharpe = float(lr.tail(90).mean() / lr.tail(90).std() * np.sqrt(252)) if len(lr) >= 30 else float("nan")
+vol = float(lr.std() * np.sqrt(252) * 100) if len(lr) >= 5 else float("nan")
+sharpe = float(lr.mean() / lr.std() * np.sqrt(252)) if len(lr) >= 5 else float("nan")
 
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("Latest NAV", f"${float(df.iloc[-1]['nav']):.2f}")
-m2.metric("YTD Return", f"{ytd_return(df):.2f}%")
-m3.metric("30d Vol", f"{vol_30d(df):.2f}%")
-m4.metric("Sharpe (90d)", f"{trailing_sharpe:.2f}" if not np.isnan(trailing_sharpe) else "—")
+m2.metric("Period Return", f"{period_return(df):.2f}%")
+m3.metric("Vol (period)", f"{vol:.2f}%" if not np.isnan(vol) else "—")
+m4.metric("Sharpe (period)", f"{sharpe:.2f}" if not np.isnan(sharpe) else "—")
 
 # NAV chart
 st.plotly_chart(
-    px.line(df, x="date", y="nav", title=f"{selected} — NAV", labels={"nav": "NAV ($)", "date": ""}),
+    px.line(df, x="date", y="nav", title=f"{fund['ticker']} — NAV", labels={"nav": "NAV ($)", "date": ""}),
     width="stretch",
 )
 

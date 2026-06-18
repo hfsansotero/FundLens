@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from fundlens.dashboard._data import filter_period, load_funds, load_prices
+from fundlens.dashboard._data import arrow, filter_range, fund_label, load_funds, load_prices, period_picker
 
 st.title("Drawdown Analysis")
 
@@ -13,26 +13,32 @@ if not funds:
     st.warning("No funds loaded.")
     st.stop()
 
-period = st.radio("Period", ["1Y", "3Y", "5Y", "All"], horizontal=True, index=2)
+start, end = period_picker("dd", default="5Y")
 
 fig = go.Figure()
 rows = []
 
 for f in funds:
-    df = filter_period(load_prices(f["id"]), period)
+    df = filter_range(load_prices(f["id"]), start, end)
     if df.empty:
         continue
     dd = (df["nav"] / df["nav"].cummax() - 1) * 100
     max_idx = dd.idxmin()
+    current_dd = float(dd.iloc[-1])
     rows.append({
-        "Ticker": f["ticker"],
+        "Fund": fund_label(f),
         "Max DD (%)": round(float(dd.min()), 2),
         "Date of Max DD": str(df.loc[max_idx, "date"]),
+        "Current DD": "📈 At peak" if current_dd >= -0.01 else arrow(current_dd),
     })
     fig.add_trace(go.Scatter(
         x=df["date"], y=dd,
         name=f["ticker"], mode="lines", fill="tozeroy", opacity=0.6,
     ))
+
+if not rows:
+    st.info("No data in the selected period.")
+    st.stop()
 
 fig.update_layout(
     title="Underwater Chart",

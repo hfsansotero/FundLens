@@ -6,7 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from fundlens.dashboard._data import filter_period, load_funds, load_prices
+from fundlens.dashboard._data import filter_range, load_funds, load_prices, period_picker
 
 st.title("Model Predictions")
 
@@ -16,14 +16,14 @@ if not funds:
     st.stop()
 
 ticker_map = {f["ticker"]: f for f in funds}
-col_f, col_p, col_h = st.columns([2, 3, 2])
+col_f, col_h = st.columns([2, 2])
 selected = col_f.selectbox("Fund", list(ticker_map.keys()))
-period = col_p.radio("Training period", ["1Y", "3Y", "5Y"], horizontal=True, index=1)
 horizon = col_h.selectbox("Forecast horizon (days)", [5, 10, 20, 30], index=3)
+start, end = period_picker("pred", default="3Y")
 
-df = filter_period(load_prices(ticker_map[selected]["id"]), period)
+df = filter_range(load_prices(ticker_map[selected]["id"]), start, end)
 if df.empty:
-    st.warning("No price data.")
+    st.info("No data in the selected period.")
     st.stop()
 
 nav = df.set_index(pd.to_datetime(df["date"]))["nav"]
@@ -31,15 +31,6 @@ nav = df.set_index(pd.to_datetime(df["date"]))["nav"]
 # ── Model selector + forecast ──────────────────────────────────────────────────
 MODEL_OPTIONS = ["arima", "ets", "linear", "xgboost", "lightgbm", "prophet", "lstm"]
 model_name = st.selectbox("Model", MODEL_OPTIONS)
-
-
-@st.cache_data(show_spinner="Running forecast…", ttl=600)
-def run_forecast(ticker: str, period: str, horizon: int, model_name: str) -> pd.DataFrame:
-    df_ = filter_period(load_prices(ticker_map[ticker]["id"]), period)
-    nav_ = df_.set_index(pd.to_datetime(df_["date"]))["nav"]
-    model = _build_model(model_name)
-    model.fit(nav_)
-    return model.predict(horizon)
 
 
 def _build_model(name: str):
@@ -57,8 +48,17 @@ def _build_model(name: str):
     }[name]()
 
 
+@st.cache_data(show_spinner="Running forecast…", ttl=600)
+def run_forecast(ticker: str, start, end, horizon: int, model_name: str) -> pd.DataFrame:
+    df_ = filter_range(load_prices(ticker_map[ticker]["id"]), start, end)
+    nav_ = df_.set_index(pd.to_datetime(df_["date"]))["nav"]
+    model = _build_model(model_name)
+    model.fit(nav_)
+    return model.predict(horizon)
+
+
 if st.button(f"Run {model_name.upper()} forecast"):
-    fc = run_forecast(selected, period, horizon, model_name)
+    fc = run_forecast(selected, start, end, horizon, model_name)
 
     fig = go.Figure()
     hist = df.tail(120)
@@ -88,9 +88,9 @@ st.divider()
 st.subheader("Volatility Forecast (GARCH)")
 
 @st.cache_data(show_spinner="Running GARCH…", ttl=600)
-def run_garch(ticker: str, period: str, horizon: int) -> pd.DataFrame:
+def run_garch(ticker: str, start, end, horizon: int) -> pd.DataFrame:
     from fundlens.models.garch_model import GarchModel
-    df_ = filter_period(load_prices(ticker_map[ticker]["id"]), period)
+    df_ = filter_range(load_prices(ticker_map[ticker]["id"]), start, end)
     nav_ = df_.set_index(pd.to_datetime(df_["date"]))["nav"]
     m = GarchModel()
     m.fit(nav_)
@@ -98,7 +98,7 @@ def run_garch(ticker: str, period: str, horizon: int) -> pd.DataFrame:
 
 
 if st.button("Run GARCH volatility forecast"):
-    vol_fc = run_garch(selected, period, horizon)
+    vol_fc = run_garch(selected, start, end, horizon)
     st.plotly_chart(
         px.bar(vol_fc, x="date", y="forecasted_vol_pct",
                title=f"{selected} — GARCH {horizon}d Annualized Vol Forecast (%)",
@@ -109,8 +109,20 @@ if st.button("Run GARCH volatility forecast"):
 # ── Walk-forward comparison ────────────────────────────────────────────────────
 st.divider()
 st.subheader("Walk-Forward Score Comparison")
-st.caption("Runs all models with walk-forward validation. Fast models (~1 min), "
-           "Prophet/LSTM are slow (5–15 min). Results cached for 10 min.")
+st.caption(
+    "Each model is **walk-forward validated**: trained on data up to a point in time, "
+    "asked to forecast the next *N* days, then the window slides forward and it repeats. "
+    "The metrics below compare those forecasts against what actually happened:"
+)
+st.markdown(
+    "- **MAE** — average forecast error, in NAV units (e.g. dollars).\n"
+    "- **RMSE** — like MAE, but penalizes large misses more heavily.\n"
+    "- **MAPE** — average error as a % of NAV, easier to compare across funds.\n\n"
+    "Lower is better on all three. The model marked **best** below is simply the one with "
+    "the lowest MAE for *this* fund and horizon — not a claim that it's the most "
+    "sophisticated, just the one whose backtested forecasts came closest historically."
+)
+st.caption("Fast models (~1 min), Prophet/LSTM are slow (5–15 min). Results cached for 10 min.")
 
 fast_models = st.multiselect(
     "Models to compare",
@@ -121,9 +133,9 @@ cmp_horizon = st.selectbox("Horizon", [5, 10, 20], key="cmp_h")
 
 
 @st.cache_data(show_spinner="Running walk-forward comparison…", ttl=600)
-def run_comparison(ticker: str, period: str, horizon: int, models: list[str]) -> pd.DataFrame:
+def run_comparison(ticker: str, start, end, horizon: int, models: list[str]) -> pd.DataFrame:
     from fundlens.models.comparison import walk_forward as wf
-    df_ = filter_period(load_prices(ticker_map[ticker]["id"]), period)
+    df_ = filter_range(load_prices(ticker_map[ticker]["id"]), start, end)
     nav_ = df_.set_index(pd.to_datetime(df_["date"]))["nav"]
     rows = []
     for name in models:
@@ -136,7 +148,7 @@ def run_comparison(ticker: str, period: str, horizon: int, models: list[str]) ->
 
 
 if st.button("Run comparison"):
-    results = run_comparison(selected, period, cmp_horizon, fast_models)
+    results = run_comparison(selected, start, end, cmp_horizon, fast_models)
     st.dataframe(
         results.sort_values("mae"),
         width="stretch",
@@ -149,4 +161,4 @@ if st.button("Run comparison"):
     )
     if "mae" in results.columns and results["mae"].notna().any():
         best = results.loc[results["mae"].idxmin(), "Model"]
-        st.success(f"Best MAE: **{best}**")
+        st.success(f"Best MAE: **{best}** — closest backtested forecasts for {selected} at this horizon.")
