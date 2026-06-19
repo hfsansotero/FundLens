@@ -188,6 +188,7 @@ pytest --cov=fundlens --cov-report=html
 1. **Database:** Create a free project at [neon.tech](https://neon.tech), copy the connection string.
 2. **Migrate data:** Set `DATABASE_URL` to the Neon URL, re-run `initial_load.py`.
 3. **Dashboard:** Deploy to [Render.com](https://render.com) as a web service.
+   - Build command: `pip install -e ".[postgres]"` (the plain `.` install skips the `psycopg2` driver)
    - Start command: `streamlit run fundlens/dashboard/app.py --server.port $PORT --server.address 0.0.0.0`
    - Add `DATABASE_URL` as an environment variable in the Render dashboard (never in code).
 
