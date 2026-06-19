@@ -5,9 +5,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from fundlens.dashboard._data import filter_period, load_funds, load_prices
+from fundlens.dashboard._data import filter_range, fund_label, load_funds, load_prices, period_picker
 
-st.set_page_config(page_title="Correlations · FundLens", layout="wide")
 st.title("Dynamic Correlations")
 
 funds = load_funds()
@@ -15,31 +14,34 @@ if not funds:
     st.warning("No funds loaded.")
     st.stop()
 
-period = st.radio("Period", ["1Y", "3Y", "5Y", "All"], horizontal=True, index=2)
+start, end = period_picker("corr", default="5Y")
 
 returns = pd.DataFrame({
-    f["ticker"]: filter_period(load_prices(f["id"]), period).set_index("date")["log_return"]
+    f["ticker"]: filter_range(load_prices(f["id"]), start, end).set_index("date")["log_return"]
     for f in funds
     if not load_prices(f["id"]).empty
 }).dropna()
 
 if returns.empty:
-    st.warning("Not enough data to compute correlations.")
+    st.info("No data in the selected period.")
     st.stop()
 
 corr = returns.corr()
 st.plotly_chart(
-    px.imshow(corr, text_auto=".2f", color_continuous_scale="RdBu_r",
+    px.imshow(corr, text_auto=".2f",
+              color_continuous_scale=["red", "white", "green"],
               zmin=-1, zmax=1, title="Return Correlation Matrix"),
-    use_container_width=True,
+    width="stretch",
 )
 
 # Rolling 60d correlation for a selected pair
 st.subheader("Rolling 60d Correlation")
-tickers = list(returns.columns)
+label_map = {fund_label(f): f["ticker"] for f in funds if f["ticker"] in returns.columns}
+labels = list(label_map.keys())
 c1, c2 = st.columns(2)
-t1 = c1.selectbox("Fund A", tickers, index=0)
-t2 = c2.selectbox("Fund B", tickers, index=min(1, len(tickers) - 1))
+l1 = c1.selectbox("Fund A (type to search)", labels, index=0)
+l2 = c2.selectbox("Fund B (type to search)", labels, index=min(1, len(labels) - 1))
+t1, t2 = label_map[l1], label_map[l2]
 
 if t1 != t2:
     roll_corr = returns[t1].rolling(60, min_periods=30).corr(returns[t2]).dropna().reset_index()
@@ -51,6 +53,6 @@ if t1 != t2:
         xaxis_title="",
     )
     fig.add_hline(y=0, line_dash="dash", line_color="gray")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 else:
     st.info("Select two different funds.")

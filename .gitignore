@@ -49,3 +49,6 @@ logs/
 *.pth
 *.pkl
 *.joblib
+
+# Personal planning notes — not for the public repo
+planning.md

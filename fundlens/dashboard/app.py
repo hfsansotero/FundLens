@@ -9,6 +9,12 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-st.title("FundLens")
-st.markdown("NAV pipeline · Predictive model comparison · Dynamic correlations")
-st.info("Use the sidebar to navigate between views.")
+pg = st.navigation([
+    st.Page("pages/00_about.py", title="About", icon="ℹ️", default=True),
+    st.Page("pages/01_overview.py", title="Overview", icon="📋"),
+    st.Page("pages/02_fund_detail.py", title="Fund Detail", icon="📈"),
+    st.Page("pages/03_correlations.py", title="Correlations", icon="🔗"),
+    st.Page("pages/04_predictions.py", title="Predictions", icon="🔮"),
+    st.Page("pages/05_drawdown.py", title="Drawdown", icon="📉"),
+])
+pg.run()

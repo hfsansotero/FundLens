@@ -7,19 +7,21 @@ from fundlens.models.base_model import BaseModel
 from fundlens.models.comparison import future_dates, walk_forward
 
 _WINDOW = 20
+_COLS = [f"lag_{i}" for i in range(_WINDOW)]
 
 
-def _lag_features(vals: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def _lag_features(vals: np.ndarray) -> tuple[pd.DataFrame, np.ndarray]:
     X = [vals[i - _WINDOW:i] for i in range(_WINDOW, len(vals))]
     y = [vals[i] for i in range(_WINDOW, len(vals))]
-    return np.array(X), np.array(y)
+    return pd.DataFrame(X, columns=_COLS), np.array(y)
 
 
 def _recursive_predict(model, buf: list, horizon: int, prices: pd.Series) -> pd.DataFrame:
     buf = buf.copy()
     preds = []
     for _ in range(horizon):
-        p = float(model.predict(np.array(buf[-_WINDOW:]).reshape(1, -1))[0])
+        x = pd.DataFrame([buf[-_WINDOW:]], columns=_COLS)
+        p = float(model.predict(x)[0])
         preds.append(p)
         buf.append(p)
     return pd.DataFrame({

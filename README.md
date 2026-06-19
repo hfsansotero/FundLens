@@ -32,7 +32,7 @@ Automated pipeline for ingesting, storing, analyzing, and visualizing daily NAVs
 | Config | pydantic-settings + python-dotenv | Validated, typed settings |
 | Logging | loguru | — |
 | Tests | pytest + pytest-cov | — |
-| Environment | conda (Python 3.11) | `environment.yml` provided |
+| Environment | conda (Python 3.11) or plain venv + pip | `environment.yml` for conda; `pyproject.toml` extras for venv |
 
 ---
 
@@ -70,29 +70,41 @@ FundLens/
 
 ## Quick Start
 
-### 1. Create conda environment
+### 1. Create an environment and install the package
+
+Pick whichever you already have set up — the rest of this guide is identical either way.
+
+**Option A — conda (recommended, used for development)**
 
 ```bash
 conda env create -f environment.yml
 conda activate fundlens
-# Phase 2 ML — install PyTorch CPU-only (avoids conda Intel VTune conflict):
+pip install -e .
+# Phase 2 ML — install PyTorch CPU-only (avoids a conda Intel VTune symbol conflict):
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 ```
 
-### 2. Install the package
+**Option B — venv + pip (no conda required)**
 
 ```bash
-pip install -e .
+python3.11 -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install --upgrade pip
+pip install -e ".[ml,dev]"
+# Phase 2 ML — CPU-only PyTorch wheel (smaller download if you don't have a CUDA GPU):
+pip install torch --index-url https://download.pytorch.org/whl/cpu
 ```
 
-### 3. Configure environment
+> **Note (both options):** `prophet` compiles a Stan model via `cmdstanpy` on first install, which can take a few minutes and needs a C++ compiler available (Xcode Command Line Tools on macOS, `build-essential` on Linux, MSVC Build Tools on Windows). If you only want to test the dashboard/pipeline without the ML models, skip the `[ml,dev]` extras / PyTorch step — `fundlens.models` imports lazily and degrades gracefully without them; only `pytest`-related and ML-specific commands will fail.
+
+### 2. Configure environment
 
 ```bash
 cp .env.example .env
 # Edit .env — add TIINGO_API_KEY if you have one (optional for Phase 0)
 ```
 
-### 4. Load historical data
+### 3. Load historical data
 
 ```bash
 python scripts/initial_load.py --all-funds --years 5
@@ -100,7 +112,7 @@ python scripts/initial_load.py --all-funds --years 5
 python scripts/initial_load.py --tickers VFINX FCNTX VBMFX --years 5
 ```
 
-### 5. Verify data
+### 4. Verify data
 
 ```bash
 python - <<'EOF'
@@ -114,14 +126,14 @@ with get_session() as s:
 EOF
 ```
 
-### 6. Launch dashboard
+### 5. Launch dashboard
 
 ```bash
 streamlit run fundlens/dashboard/app.py
 # Opens at http://localhost:8501
 ```
 
-### 7. Start daily scheduler (optional)
+### 6. Start daily scheduler (optional)
 
 ```bash
 python fundlens/pipeline/scheduler.py
@@ -186,9 +198,10 @@ pytest --cov=fundlens --cov-report=html
 | Phase | Goal | Status |
 |---|---|---|
 | 0 — Foundations | Project structure, ingestion, DB, initial load | ✅ Complete |
-| 1 — Pipeline + Analysis | Returns/vol/drawdown processing, full dashboard (5 pages) | ✅ Complete (scheduler pending) |
+| 1 — Pipeline + Analysis | Returns/vol/drawdown processing, full dashboard (6 pages incl. About) | ✅ Complete (scheduler pending) |
 | 2 — Predictive Models | ARIMA, Prophet, ETS, Linear, XGBoost, LightGBM, LSTM, GARCH vol, walk-forward | 🔄 In progress (models done, DB persistence pending) |
 | 3 — Expansion | Macro variables (VIX/FRED), regime detection (HMM), alerts | Pending |
+| 4 — User Accounts | Login, per-user fund watchlist (capped), configurable model parameters (ARIMA order, Prophet/XGBoost/LightGBM/LSTM hyperparameters) | Pending — requires hosting (Phase 1 deploy) first |
 
 ---
 
