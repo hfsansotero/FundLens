@@ -20,16 +20,16 @@ _PERIOD_DELTA = {
 def load_funds() -> list[dict]:
     with get_session() as session:
         return [
-            {"id": f.id, "ticker": f.ticker, "name": f.name or f.ticker,
+            {"id": f.id, "ticker": f.ticker, "isin": f.isin, "name": f.name or f.ticker,
              "category": f.category, "manager": f.manager}
             for f in repo.get_all_active_funds(session)
         ]
 
 
 def fund_label(f: dict) -> str:
-    """Ticker + name (+ category/manager) — lets st.selectbox's built-in
+    """Ticker + ISIN + name (+ category/manager) — lets st.selectbox's built-in
     type-to-filter double as a search across all of those fields."""
-    bits = [f["ticker"], f["name"], f.get("category"), f.get("manager")]
+    bits = [f["ticker"], f.get("isin"), f["name"], f.get("category"), f.get("manager")]
     return " — ".join(b for b in bits if b)
 
 

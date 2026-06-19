@@ -1,36 +1,98 @@
 funds:
   - ticker: VFINX
+    isin: US9229081081
     name: "Vanguard 500 Index"
     category: "Large Blend"
     manager: "Vanguard"
     currency: USD
 
   - ticker: FCNTX
+    isin: US3160711095
     name: "Fidelity Contrafund"
     category: "Large Growth"
     manager: "Fidelity"
     currency: USD
 
   - ticker: VBMFX
+    isin: US9219371088
     name: "Vanguard Total Bond Market"
     category: "Bonds"
     manager: "Vanguard"
     currency: USD
 
   - ticker: VGTSX
+    isin: US9219096024
     name: "Vanguard Total International Stock"
     category: "International"
     manager: "Vanguard"
     currency: USD
 
   - ticker: PRHSX
+    isin: US7414801073
     name: "T. Rowe Price Health Sciences"
     category: "Sector Health"
     manager: "T. Rowe Price"
     currency: USD
 
   - ticker: FAGIX
+    isin: US3160621088
     name: "Fidelity Capital & Income"
     category: "High Yield Bonds"
+    manager: "Fidelity"
+    currency: USD
+
+  - ticker: 0P0001CLDK.F
+    isin: IE00BYX5NX33
+    name: "Fidelity MSCI World Index Fund P-ACC-EUR"
+    category: "Large Blend (Global)"
+    manager: "Fidelity"
+    currency: EUR
+
+  - ticker: 0P00012I6A.F
+    isin: IE0031786696
+    name: "Vanguard Emerging Markets Stock Index Acc"
+    category: "Emerging Markets"
+    manager: "Vanguard"
+    currency: EUR
+
+  - ticker: 0P00015OFP.F
+    isin: LU1213836080
+    name: "Fidelity Global Technology A-Acc-EUR"
+    category: "Sector Technology"
+    manager: "Fidelity"
+    currency: EUR
+
+  - ticker: 0P0001XF42.F
+    isin: IE000N4ZYX28
+    name: "iShares US Index (IE) S Acc"
+    category: "Large Blend (US)"
+    manager: "iShares (BlackRock)"
+    currency: EUR
+
+  - ticker: 0P0001CLDI.F
+    isin: IE00BYX5N771
+    name: "Fidelity MSCI Japan Index EUR P Acc"
+    category: "Japan Equity"
+    manager: "Fidelity"
+    currency: EUR
+
+  - ticker: 0P0001CJGN.F
+    isin: IE00BYX5MD61
+    name: "Fidelity MSCI Europe Index EUR P Acc"
+    category: "Europe Equity"
+    manager: "Fidelity"
+    currency: EUR
+
+  - ticker: 0P00006TV8.F
+    isin: IE00B1G3DH73
+    name: "Vanguard U.S. 500 Stock Index EUR Hedged Acc"
+    category: "Large Blend (US, EUR Hedged)"
+    manager: "Vanguard"
+    currency: EUR
+
+  - ticker: 0P0001COSJ
+    isin: IE00BDZVHT63
+    name: "Fidelity MSCI Pacific ex Japan Index USD P Acc"
+    category: "Asia Pacific ex Japan"
     manager: "Fidelity"
     currency: USD
