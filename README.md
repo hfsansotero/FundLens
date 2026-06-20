@@ -2,7 +2,7 @@
 
 Automated pipeline for ingesting, storing, analyzing, and visualizing daily NAVs (Net Asset Values) of mutual funds — with predictive model comparison (ARIMA, Prophet, ETS, Linear, XGBoost, LightGBM, LSTM) and dynamic correlation analysis.
 
-> **Status:** Phase 1 complete (dashboard live). Phase 2 in progress (models implemented, scheduler pending).
+> **Status:** Phase 1 complete and deployed — live at **[fundlens-n43k.onrender.com](https://fundlens-n43k.onrender.com)**. Phase 2 in progress (models implemented, DB persistence pending).
 
 ---
 
@@ -183,13 +183,18 @@ pytest --cov=fundlens --cov-report=html
 
 ---
 
-## Cloud Deployment (Phase 1 end)
+## Cloud Deployment (live)
 
-1. **Database:** Create a free project at [neon.tech](https://neon.tech), copy the connection string.
-2. **Migrate data:** Set `DATABASE_URL` to the Neon URL, re-run `initial_load.py`.
-3. **Dashboard:** Deploy to [Render.com](https://render.com) as a web service.
+Currently deployed at **[fundlens-n43k.onrender.com](https://fundlens-n43k.onrender.com)**. To reproduce:
+
+1. **Database:** Create a free project at [neon.tech](https://neon.tech), copy the connection string (Neon dashboard → **Connect**).
+2. **Migrate data:** `export DATABASE_URL=<neon-connection-string>` then re-run `python scripts/initial_load.py --all-funds --years 5`.
+3. **Dashboard:** Deploy to [Render.com](https://render.com) as a web service, connected to this repo's `main` branch.
+   - Build command: `pip install -e ".[postgres]"` (the plain `.` install skips the `psycopg2` driver)
    - Start command: `streamlit run fundlens/dashboard/app.py --server.port $PORT --server.address 0.0.0.0`
-   - Add `DATABASE_URL` as an environment variable in the Render dashboard (never in code).
+   - Add `DATABASE_URL` as an environment variable in the Render dashboard (never in code). Render auto-redeploys on every push to the tracked branch.
+4. **Daily ingestion:** GitHub Actions workflow `.github/workflows/daily_update.yml` runs twice on weekdays (~18:30 ET, retry ~20:30 ET) against the same Neon `DATABASE_URL` — set as a repo secret (Settings → Secrets and variables → Actions). Scheduled triggers only fire from workflow files on the default branch (`main`).
+5. **Tiingo:** intentionally not configured in production — its free-tier license is "internal use only" and forbids sharing the data publicly. The pipeline already falls back cleanly to yfinance-only when `TIINGO_API_KEY` is unset.
 
 ---
 

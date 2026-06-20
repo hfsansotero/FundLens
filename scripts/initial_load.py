@@ -59,6 +59,7 @@ def main():
 
             fund = repo.get_or_create_fund(
                 session, ticker,
+                isin=fund_cfg.get("isin"),
                 name=fund_cfg.get("name"),
                 category=fund_cfg.get("category"),
                 manager=fund_cfg.get("manager"),

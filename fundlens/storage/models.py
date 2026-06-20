@@ -23,6 +23,7 @@ class Fund(Base):
 
     id: Mapped[int] = mapped_column(Integer, _fund_seq, primary_key=True)
     ticker: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
+    isin: Mapped[Optional[str]] = mapped_column(String(20))
     name: Mapped[Optional[str]] = mapped_column(String(200))
     category: Mapped[Optional[str]] = mapped_column(String(100))
     manager: Mapped[Optional[str]] = mapped_column(String(100))
