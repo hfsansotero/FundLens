@@ -2,8 +2,8 @@ name: Daily NAV Update
 
 on:
   schedule:
-    - cron: "30 23 * * 1-5"  # ~18:30 ET Mon-Fri, first attempt (UTC, EST-anchored)
-    - cron: "30 1 * * 2-6"   # ~20:30 ET Mon-Fri, retry 2h later if the first run missed data
+    - cron: "30 23 * * 1-5"  # 23:30 UTC Mon-Fri, first attempt (18:30 ET / 19:30 EDT)
+    - cron: "30 1 * * 2-6"   # 01:30 UTC, retry 2h later if the first run missed data
   workflow_dispatch:
 
 jobs:
