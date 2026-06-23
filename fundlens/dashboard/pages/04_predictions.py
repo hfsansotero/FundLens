@@ -1,5 +1,7 @@
 """Model predictions — forecast chart + walk-forward score comparison."""
 
+import importlib.util
+
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -29,8 +31,25 @@ if df.empty:
 nav = df.set_index(pd.to_datetime(df["date"]))["nav"]
 
 # ── Model selector + forecast ──────────────────────────────────────────────────
-MODEL_OPTIONS = ["arima", "ets", "linear", "xgboost", "lightgbm", "prophet", "lstm"]
-model_name = st.selectbox("Model", MODEL_OPTIONS)
+# Module behind each model — used to detect what this deployment actually has installed
+# (Render's free tier skips torch/xgboost/lightgbm, ~1GB+, too heavy for 512MB RAM).
+MODEL_DEPS = {
+    "arima": "statsmodels", "ets": "statsmodels", "linear": "sklearn",
+    "xgboost": "xgboost", "lightgbm": "lightgbm", "prophet": "prophet", "lstm": "torch",
+}
+MODEL_OPTIONS = list(MODEL_DEPS)
+AVAILABLE = {m: importlib.util.find_spec(dep) is not None for m, dep in MODEL_DEPS.items()}
+
+
+def _model_label(name: str) -> str:
+    return name if AVAILABLE[name] else f"❌ {name} (unavailable in this deployment)"
+
+
+model_name = st.selectbox("Model", MODEL_OPTIONS, format_func=_model_label)
+model_unavailable = not AVAILABLE[model_name]
+if model_unavailable:
+    st.caption(f"❌ **{model_name}** needs `{MODEL_DEPS[model_name]}`, not installed in this "
+               "deployment — available when running locally with the full `ml` extra.")
 
 
 def _build_model(name: str):
@@ -57,7 +76,7 @@ def run_forecast(ticker: str, start, end, horizon: int, model_name: str) -> pd.D
     return model.predict(horizon)
 
 
-if st.button(f"Run {model_name.upper()} forecast"):
+if st.button(f"Run {model_name.upper()} forecast", disabled=model_unavailable):
     fc = run_forecast(selected, start, end, horizon, model_name)
 
     fig = go.Figure()
@@ -97,7 +116,10 @@ def run_garch(ticker: str, start, end, horizon: int) -> pd.DataFrame:
     return m.forecast_vol(horizon)
 
 
-if st.button("Run GARCH volatility forecast"):
+garch_unavailable = importlib.util.find_spec("arch") is None
+if garch_unavailable:
+    st.caption("❌ GARCH needs `arch`, not installed in this deployment.")
+if st.button("Run GARCH volatility forecast", disabled=garch_unavailable):
     vol_fc = run_garch(selected, start, end, horizon)
     st.plotly_chart(
         px.bar(vol_fc, x="date", y="forecasted_vol_pct",
@@ -127,7 +149,8 @@ st.caption("Fast models (~1 min), Prophet/LSTM are slow (5–15 min). Results ca
 fast_models = st.multiselect(
     "Models to compare",
     MODEL_OPTIONS,
-    default=["arima", "ets", "linear", "xgboost", "lightgbm"],
+    default=[m for m in ["arima", "ets", "linear", "xgboost", "lightgbm"] if AVAILABLE[m]],
+    format_func=_model_label,
 )
 cmp_horizon = st.selectbox("Horizon", [5, 10, 20], key="cmp_h")
 
