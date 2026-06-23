@@ -1,6 +1,6 @@
 """Daily pipeline job: fetch today's NAV → store → update metrics."""
 
-from datetime import date
+from datetime import date, timedelta
 from loguru import logger
 
 from fundlens.ingestion.yfinance_source import YFinanceSource
@@ -27,8 +27,9 @@ def run_daily_update(target_date: date | None = None) -> None:
 
 
 def _update_fund(session, fund, target_date, primary, backup):
+    # yfinance's end is exclusive — same start/end always returns empty.
     start = str(target_date)
-    end = str(target_date)
+    end = str(target_date + timedelta(days=1))
     source = primary if primary.is_available() else backup
 
     try:
