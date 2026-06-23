@@ -6,7 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from fundlens.dashboard._data import filter_range, load_funds, load_prices, period_picker
+from fundlens.dashboard._data import filter_range, fund_label, load_funds, load_prices, period_picker
 
 st.title("Model Predictions")
 
@@ -17,7 +17,7 @@ if not funds:
 
 ticker_map = {f["ticker"]: f for f in funds}
 col_f, col_h = st.columns([2, 2])
-selected = col_f.selectbox("Fund", list(ticker_map.keys()))
+selected = col_f.selectbox("Fund", list(ticker_map.keys()), format_func=lambda t: fund_label(ticker_map[t]))
 horizon = col_h.selectbox("Forecast horizon (days)", [5, 10, 20, 30], index=3)
 start, end = period_picker("pred", default="3Y")
 
