@@ -31,12 +31,16 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Phase 2 — heavy ML deps (require pystan compilation, skip in CI)
-ml = [
+# Lightweight forecasting models — fits Render's free tier (~512MB RAM).
+ml-light = [
     "statsmodels>=0.14",
     "prophet>=1.1",
     "scikit-learn>=1.4",
     "arch>=6.0",
+]
+# Full model suite incl. torch/xgboost (~1GB+) — local/dev only, too heavy for free hosting.
+ml = [
+    "fundlens[ml-light]",
     "xgboost>=2.0",
     "lightgbm>=4.0",
     "torch>=2.3",

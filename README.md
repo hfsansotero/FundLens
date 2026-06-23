@@ -190,11 +190,12 @@ Currently deployed at **[fundlens-n43k.onrender.com](https://fundlens-n43k.onren
 1. **Database:** Create a free project at [neon.tech](https://neon.tech), copy the connection string (Neon dashboard → **Connect**).
 2. **Migrate data:** `export DATABASE_URL=<neon-connection-string>` then re-run `python scripts/initial_load.py --all-funds --years 5`.
 3. **Dashboard:** Deploy to [Render.com](https://render.com) as a web service, connected to this repo's `main` branch.
-   - Build command: `pip install -e ".[postgres]"` (the plain `.` install skips the `psycopg2` driver)
+   - Build command: `pip install -e ".[postgres,ml-light]"` (the plain `.` install skips the `psycopg2` driver and all prediction models)
    - Start command: `streamlit run fundlens/dashboard/app.py --server.port $PORT --server.address 0.0.0.0`
    - Add `DATABASE_URL` as an environment variable in the Render dashboard (never in code). Render auto-redeploys on every push to the tracked branch.
 4. **Daily ingestion:** GitHub Actions workflow `.github/workflows/daily_update.yml` runs twice on weekdays (~18:30 ET, retry ~20:30 ET) against the same Neon `DATABASE_URL` — set as a repo secret (Settings → Secrets and variables → Actions). Scheduled triggers only fire from workflow files on the default branch (`main`).
 5. **Tiingo:** intentionally not configured in production — its free-tier license is "internal use only" and forbids sharing the data publicly. The pipeline already falls back cleanly to yfinance-only when `TIINGO_API_KEY` is unset.
+6. **Prediction models:** only the lightweight ones (ARIMA, ETS, Linear/Ridge, Prophet, GARCH — `ml-light` extra, ~160MB) run in production. LSTM (torch), XGBoost and LightGBM pull in ~1GB+ of deps — too heavy for Render's free 512MB RAM — so the dashboard greys them out (❌) when their package isn't installed. They still work locally with `pip install -e ".[ml]"`.
 
 ---
 
