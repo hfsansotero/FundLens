@@ -1,6 +1,7 @@
 """Daily pipeline job: fetch today's NAV → store → update metrics."""
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 from loguru import logger
 
 from fundlens.ingestion.yfinance_source import YFinanceSource
@@ -10,7 +11,9 @@ from fundlens.storage import repository as repo
 
 
 def run_daily_update(target_date: date | None = None) -> None:
-    target_date = target_date or date.today()
+    # market-day, not server UTC day: the retry cron fires 01:30 UTC the next
+    # calendar day, which is still the same trading day in US Eastern.
+    target_date = target_date or datetime.now(ZoneInfo("America/New_York")).date()
     logger.info(f"Daily update started for {target_date}")
 
     primary = YFinanceSource()
