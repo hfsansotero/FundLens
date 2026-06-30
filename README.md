@@ -23,7 +23,7 @@ Automated pipeline for ingesting, storing, analyzing, and visualizing daily NAVs
 | Layer | Tool | Notes |
 |---|---|---|
 | Data ingestion | yfinance + Tiingo | No cost; Tiingo requires free API key |
-| Scheduling | APScheduler → Prefect (Phase 2) | Embedded scheduler, no external server |
+| Scheduling | GitHub Actions cron (prod) + APScheduler (local, optional) | No external server needed |
 | Database | DuckDB (local) → Neon PostgreSQL (cloud) | SQLAlchemy abstraction = one-line swap |
 | ORM | SQLAlchemy 2.x | Typed mapped columns |
 | Processing | pandas + numpy | — |
@@ -52,10 +52,10 @@ FundLens/
 │   ├── ingestion/            # DataSource abstraction + yfinance/Tiingo implementations
 │   ├── storage/              # SQLAlchemy ORM models, engine, repository (all DB access)
 │   ├── processing/           # Log-returns, volatility, feature engineering
-│   ├── analysis/             # Correlations, drawdown, regime detection (Phase 2)
+│   ├── analysis/             # Correlations, drawdown, regime detection (Phase 3, stub)
 │   ├── models/               # 7 price models + GARCH vol + walk-forward comparison engine
 │   ├── pipeline/             # Daily update job + APScheduler config
-│   └── dashboard/            # Streamlit app + 5 pages
+│   └── dashboard/            # Streamlit app + 6 pages
 │
 ├── scripts/
 │   ├── initial_load.py       # One-time historical load (5+ years)
@@ -160,16 +160,26 @@ Edit `config/funds.yaml` — no code changes needed. The initial load and daily 
 
 ---
 
-## Funds (Phase 1)
+## Funds Tracked
 
-| Ticker | Name | Category | Manager |
-|---|---|---|---|
-| VFINX | Vanguard 500 Index | Large Blend | Vanguard |
-| FCNTX | Fidelity Contrafund | Large Growth | Fidelity |
-| VBMFX | Vanguard Total Bond Market | Bonds | Vanguard |
-| VGTSX | Vanguard Total Intl Stock | International | Vanguard |
-| PRHSX | T. Rowe Price Health Sciences | Sector Health | T. Rowe Price |
-| FAGIX | Fidelity Capital & Income | High Yield Bonds | Fidelity |
+14 funds (6 USD, 8 EUR) — edit `config/funds.yaml` to change the list.
+
+| Ticker | Name | Category | Manager | Currency |
+|---|---|---|---|---|
+| VFINX | Vanguard 500 Index | Large Blend | Vanguard | USD |
+| FCNTX | Fidelity Contrafund | Large Growth | Fidelity | USD |
+| VBMFX | Vanguard Total Bond Market | Bonds | Vanguard | USD |
+| VGTSX | Vanguard Total International Stock | International | Vanguard | USD |
+| PRHSX | T. Rowe Price Health Sciences | Sector Health | T. Rowe Price | USD |
+| FAGIX | Fidelity Capital & Income | High Yield Bonds | Fidelity | USD |
+| 0P0001CLDK.F | Fidelity MSCI World Index Fund P-ACC-EUR | Large Blend (Global) | Fidelity | EUR |
+| 0P00012I6A.F | Vanguard Emerging Markets Stock Index Acc | Emerging Markets | Vanguard | EUR |
+| 0P00015OFP.F | Fidelity Global Technology A-Acc-EUR | Sector Technology | Fidelity | EUR |
+| 0P0001XF42.F | iShares US Index (IE) S Acc | Large Blend (US) | iShares (BlackRock) | EUR |
+| 0P0001CLDI.F | Fidelity MSCI Japan Index EUR P Acc | Japan Equity | Fidelity | EUR |
+| 0P0001CJGN.F | Fidelity MSCI Europe Index EUR P Acc | Europe Equity | Fidelity | EUR |
+| 0P00006TV8.F | Vanguard U.S. 500 Stock Index EUR Hedged Acc | Large Blend (US, EUR Hedged) | Vanguard | EUR |
+| 0P0001COSJ | Fidelity MSCI Pacific ex Japan Index USD P Acc | Asia Pacific ex Japan | Fidelity | USD |
 
 ---
 
@@ -193,7 +203,7 @@ Currently deployed at **[fundlens-n43k.onrender.com](https://fundlens-n43k.onren
    - Build command: `pip install -e ".[postgres,ml-light]"` (the plain `.` install skips the `psycopg2` driver and all prediction models)
    - Start command: `streamlit run fundlens/dashboard/app.py --server.port $PORT --server.address 0.0.0.0`
    - Add `DATABASE_URL` as an environment variable in the Render dashboard (never in code). Render auto-redeploys on every push to the tracked branch.
-4. **Daily ingestion:** GitHub Actions workflow `.github/workflows/daily_update.yml` runs twice on weekdays (~18:30 ET, retry ~20:30 ET) against the same Neon `DATABASE_URL` — set as a repo secret (Settings → Secrets and variables → Actions). Scheduled triggers only fire from workflow files on the default branch (`main`).
+4. **Daily ingestion:** GitHub Actions workflow `.github/workflows/daily_update.yml` runs twice on weekdays, fixed at **23:30 UTC** (first attempt) and **01:30 UTC** (retry, if data was missing) — cron is UTC-pinned, so the ET-equivalent shifts by an hour with US daylight saving (see the dashboard's About tab for the live local-time conversion). Runs against the same Neon `DATABASE_URL` — set as a repo secret (Settings → Secrets and variables → Actions). Scheduled triggers only fire from workflow files on the default branch (`main`).
 5. **Tiingo:** intentionally not configured in production — its free-tier license is "internal use only" and forbids sharing the data publicly. The pipeline already falls back cleanly to yfinance-only when `TIINGO_API_KEY` is unset.
 6. **Prediction models:** only the lightweight ones (ARIMA, ETS, Linear/Ridge, Prophet, GARCH — `ml-light` extra, ~160MB) run in production. LSTM (torch), XGBoost and LightGBM pull in ~1GB+ of deps — too heavy for Render's free 512MB RAM — so the dashboard greys them out (❌) when their package isn't installed. They still work locally with `pip install -e ".[ml]"`.
 
@@ -204,7 +214,7 @@ Currently deployed at **[fundlens-n43k.onrender.com](https://fundlens-n43k.onren
 | Phase | Goal | Status |
 |---|---|---|
 | 0 — Foundations | Project structure, ingestion, DB, initial load | ✅ Complete |
-| 1 — Pipeline + Analysis | Returns/vol/drawdown processing, full dashboard (6 pages incl. About) | ✅ Complete (scheduler pending) |
+| 1 — Pipeline + Analysis | Returns/vol/drawdown processing, full dashboard (6 pages incl. About) | ✅ Complete (daily cron live via GitHub Actions) |
 | 2 — Predictive Models | ARIMA, Prophet, ETS, Linear, XGBoost, LightGBM, LSTM, GARCH vol, walk-forward | 🔄 In progress (models done, DB persistence pending) |
 | 3 — Expansion | Macro variables (VIX/FRED), regime detection (HMM), alerts | Pending |
 | 4 — User Accounts | Login, per-user fund watchlist (capped), configurable model parameters (ARIMA order, Prophet/XGBoost/LightGBM/LSTM hyperparameters) | Pending — requires hosting (Phase 1 deploy) first |

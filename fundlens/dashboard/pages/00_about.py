@@ -1,8 +1,21 @@
 """About — glossary of concepts and disclaimer."""
 
+from datetime import datetime
+from zoneinfo import ZoneInfo  # stdlib — handles DST automatically
+
 import streamlit as st
 
 st.title("About FundLens")
+
+
+def _local_time(hour: int, minute: int, tz: str) -> str:
+    today = datetime.now(ZoneInfo("UTC")).date()
+    utc = datetime(today.year, today.month, today.day, hour, minute, tzinfo=ZoneInfo("UTC"))
+    return utc.astimezone(ZoneInfo(tz)).strftime("%H:%M")
+
+
+_RUNS = [("First attempt", 23, 30), ("Retry (if data was missing)", 1, 30)]
+_TZS = [("UTC", "UTC"), ("US Eastern", "America/New_York"), ("Central Europe", "Europe/Madrid")]
 
 st.warning(
     "**Not investment advice.** FundLens is an analytics and research tool. "
@@ -42,7 +55,27 @@ is better) rather than by how plausible the chart looks.
 How far each fund has fallen from its prior peak at any point in time —
 a common way to gauge the worst-case pain an investor would have felt
 holding it.
+""")
 
+st.markdown("#### Data Freshness")
+st.caption(
+    "NAV data is fetched on weekdays only (no run on weekends or when a "
+    "market is closed for a holiday). Times below are for *today*, "
+    "converted automatically for daylight saving."
+)
+header = "| Run | " + " | ".join(name for name, _ in _TZS) + " |"
+sep = "|---" * (len(_TZS) + 1) + "|"
+rows = [
+    "| " + label + " | " + " | ".join(_local_time(h, m, tz) for _, tz in _TZS) + " |"
+    for label, h, m in _RUNS
+]
+st.markdown("\n".join([header, sep, *rows]))
+st.caption(
+    "European (EUR-denominated) funds often publish their NAV later than "
+    "US funds, so they can lag a day behind right after the run."
+)
+
+st.markdown("""
 ---
 
 #### Glossary
